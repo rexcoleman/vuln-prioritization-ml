@@ -61,11 +61,11 @@ Fill in all `{{PLACEHOLDER}}` values before use. Delete this section when custom
 
 | Property | Value |
 |----------|-------|
-| **Working title** | {{BLOG_TITLE}} |
-| **Content pillar** | {{CONTENT_PILLAR}} |
-| **Target audience** | {{TARGET_AUDIENCE}} |
-| **One-line thesis** | *(What is the single insight a reader walks away with?)* |
-| **What was shipped** | *(Link to repo, demo, or artifact that grounds this post)* |
+| **Working title** | Why CVSS Gets It Wrong: ML-Powered Vulnerability Prioritization with Explainable Features |
+| **Content pillar** | AI Security Architecture (40% pillar) |
+| **Target audience** | P1: AI security hiring managers, P2: CISOs (Mandiant network) |
+| **One-line thesis** | CVSS is a static formula from 2005; an ML model trained on real exploit data reveals what actually makes vulnerabilities dangerous — and the top features aren't what CVSS weights highest. |
+| **What was shipped** | https://github.com/rexcoleman/vuln-prioritization-ml- |
 
 ### Voice Check
 
@@ -97,7 +97,7 @@ This post MUST pass the builder-voice test:
 
 Every technical post MUST include at least one architecture diagram showing system-level design. Tools: Mermaid (renders in Hugo/GitHub/dev.to), Excalidraw (hand-drawn aesthetic), or draw.io.
 
-**Diagram captures:** *(describe what the diagram will show)*
+**Diagram captures:** Data flow from NVD API → ExploitDB label join → Feature engineering (NLP + temporal + metadata) → Model training → CVSS/EPSS comparison → SHAP explainability → Adversarial evaluation
 
 ---
 
