@@ -156,8 +156,7 @@ def rebuild_features_from_perturbed_descriptions(test_df, perturbed_descs, featu
     perturbed_df["desc_length"] = perturbed_df["description"].fillna("").str.len()
     perturbed_df["desc_word_count"] = perturbed_df["description"].fillna("").str.split().str.len()
 
-    # Recompute keyword features
-    from scripts.build_features import engineer_features  # noqa: avoid circular
+    # Recompute keyword features (inlined to avoid circular import)
     keywords = {
         "remote_code_execution": r"remote\s+code\s+execution|rce",
         "sql_injection": r"sql\s+injection|sqli",
@@ -165,11 +164,11 @@ def rebuild_features_from_perturbed_descriptions(test_df, perturbed_descs, featu
         "xss": r"cross.site\s+scripting|xss",
         "privilege_escalation": r"privilege\s+escalation|privesc",
         "authentication_bypass": r"authentication\s+bypass|auth\s+bypass",
-        "denial_of_service": r"denial\s+of\s+service|dos\\b",
+        "denial_of_service": r"denial\s+of\s+service|dos\b",
         "information_disclosure": r"information\s+disclosure|info\s+leak",
         "arbitrary_code": r"arbitrary\s+code",
-        "allows_attackers": r"allows?\\s+(remote\\s+)?attackers?",
-        "crafted": r"crafted\\s+(request|packet|input|file|url)",
+        "allows_attackers": r"allows?\s+(remote\s+)?attackers?",
+        "crafted": r"crafted\s+(request|packet|input|file|url)",
     }
     for name, pattern in keywords.items():
         col = f"kw_{name}"
