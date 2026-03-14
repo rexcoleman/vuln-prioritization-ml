@@ -82,10 +82,12 @@ def ingest_nvd(api_key=None, start_year=None, resume=False):
     delay = RATE_LIMIT_DELAY if api_key else RATE_LIMIT_DELAY_NO_KEY
 
     # Build base params
+    # NOTE: NVD API 2.0 date filtering returns 404 without proper timezone format.
+    # Instead, download all CVEs and filter by year during feature engineering.
     params = {"resultsPerPage": RESULTS_PER_PAGE}
     if start_year:
-        params["pubStartDate"] = f"{start_year}-01-01T00:00:00.000"
-        params["pubEndDate"] = datetime.now().strftime("%Y-%m-%dT23:59:59.999")
+        print(f"NOTE: --start-year {start_year} will filter during feature engineering, not API query.")
+        print(f"Downloading all CVEs and filtering post-download.")
 
     # Get total count
     total = check_api_access(api_key)
