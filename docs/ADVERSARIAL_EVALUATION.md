@@ -68,6 +68,48 @@ The threat model MUST be defined before any adversarial evaluation begins. It co
 | **Perturbation budget (ε)** | {{EPSILON_VALUES}} |
 | **Attack surface** | *(test-time inputs / training data / reward signal / environment dynamics)* |
 
+### 2b) Formal Threat Model (YAML)
+
+```yaml
+threat_model:
+  adversary_knowledge: gray_box  # Attacker knows CVSS/EPSS exist, can influence metadata
+  adversary_capability:
+    perturbation_type: semantic  # Modify CVE text, vendor disclosure patterns
+    perturbation_budget:
+      norm: semantic
+      epsilon: "Can modify CVE description text, reference URLs, vendor information"
+    access:
+      - cve_description  # Via responsible disclosure or fake CVEs
+      - vendor_metadata  # Via vendor reputation manipulation (slow)
+    constraints:
+      - "Cannot modify EPSS scores directly (computed by First.org)"
+      - "Cannot modify historical exploitation labels"
+      - "Cannot modify CVSS base scores retroactively"
+  adversary_goal: integrity  # Cause mis-prioritization (high-risk vulns deprioritized)
+  attack_surface:
+    controllable_features: [description_keywords, reference_count, vendor_name]
+    observable_features: [epss_score, cvss_base_score, cwe_category]
+    system_features: [publication_date, exploitation_label, vendor_cve_count]
+  attacks_tested:
+    - type: text_keyword_perturbation
+      sophistication: low
+      tool: custom (modify description keywords)
+    - type: reference_count_manipulation
+      sophistication: low
+      tool: custom (add/remove reference URLs)
+  attacks_NOT_tested:
+    - type: adversarial_NLP_attack
+      reason: "Text features are bag-of-words; gradient attacks not applicable to tree models"
+    - type: EPSS_score_manipulation
+      reason: "EPSS is external system; cannot be perturbed by attacker"
+    - type: temporal_poisoning
+      reason: "Historical labels cannot be retroactively modified"
+  limitation_acknowledgment: |
+    Single-seed results (42). Adversarial evaluation limited to controllability
+    analysis — classifying features by attacker influence. No adaptive adversary
+    or ML-specific attack (evasion, poisoning) tested.
+```
+
 **Rule:** The threat model MUST be documented in the report Methods section before adversarial experiments run.
 
 **Verification:** Report Methods section contains a threat model paragraph specifying all properties above. `config_resolved.yaml` records `threat_model`, `perturbation_norm`, and `epsilon` for every adversarial run.
