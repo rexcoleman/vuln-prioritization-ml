@@ -239,11 +239,10 @@ The most important finding from the complexity sweep is that **XGBoost at max_de
 
 ---
 
-## Feature Group Ablation [SUGGESTED, 2-SEED]
+## Feature Group Ablation [DEMONSTRATED]
 
-> **Seeds:** 42, 123 (mean of 2). Full 5-seed results will upgrade to [DEMONSTRATED].
+> **Seeds:** 42, 123, 456, 789, 1024 (5 seeds, all identical — XGBoost is deterministic given fixed split).
 > **Model:** XGBoost (default HP, 49 features, AUC 0.825). Full model is the baseline.
-> **Note:** Both seeds produce identical XGBoost results (deterministic given fixed data + split), so mean = individual seed values. The 2-seed tag reflects that 3 additional seeds are still running for completeness.
 
 **Key finding: EPSS features dominate.** Removing EPSS drops AUC by 15.5pp (0.825 to 0.670). Using ONLY EPSS achieves AUC 0.901 — higher than the full 49-feature model. This confirms the corrected SHAP finding (EPSS percentile is the #1 predictor).
 
