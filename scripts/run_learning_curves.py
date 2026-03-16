@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Generate learning curve data for all models.
 
-Trains RF, XGBoost, and LogReg on increasing fractions of training data
-to diagnose underfitting vs overfitting.
+Trains RF, XGBoost, LogReg, SVM-RBF, LightGBM, kNN, and MLP on increasing
+fractions of training data to diagnose underfitting vs overfitting.
 
 Usage:
     python scripts/run_learning_curves.py --data-dir data/
@@ -20,8 +20,20 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
+
+try:
+    import lightgbm as lgb
+    HAS_LIGHTGBM = True
+except ImportError:
+    HAS_LIGHTGBM = False
+    print("WARNING: lightgbm not installed. LightGBM will be skipped.")
+
+SVM_MAX_TRAIN = 50_000
 
 DEFAULT_SEEDS = [42, 123, 456, 789, 1024]
 FRACTIONS = [0.1, 0.25, 0.5, 0.75, 1.0]
@@ -60,7 +72,7 @@ def evaluate(y_true, y_pred, y_prob):
 
 def build_models(seed, scale_pos_weight=1.0):
     """Build model dict with consistent hyperparameters matching train_models.py."""
-    return {
+    models = {
         "rf": RandomForestClassifier(
             n_estimators=200, max_depth=20, min_samples_leaf=5,
             class_weight="balanced", random_state=seed, n_jobs=-1,
@@ -74,7 +86,28 @@ def build_models(seed, scale_pos_weight=1.0):
             max_iter=1000, class_weight="balanced",
             random_state=seed, solver="lbfgs",
         ),
+        "svm_rbf": SVC(
+            kernel="rbf", C=1.0, gamma="scale", probability=True,
+            class_weight="balanced", random_state=seed,
+        ),
+        "knn": KNeighborsClassifier(
+            n_neighbors=11, weights="uniform", metric="euclidean", n_jobs=-1,
+        ),
+        "mlp": MLPClassifier(
+            hidden_layer_sizes=(100,), activation="relu", solver="adam",
+            learning_rate_init=0.001, max_iter=200, early_stopping=True,
+            validation_fraction=0.1, random_state=seed,
+        ),
     }
+    if HAS_LIGHTGBM:
+        models["lightgbm"] = lgb.LGBMClassifier(
+            n_estimators=200, max_depth=8, learning_rate=0.1,
+            is_unbalance=True, random_state=seed, n_jobs=-1, verbose=-1,
+        )
+    return models
+
+# Models that require StandardScaler
+SCALED_MODELS = {"logreg", "svm_rbf", "knn", "mlp"}
 
 
 def subsample_stratified(X, y, fraction, seed):
@@ -84,6 +117,17 @@ def subsample_stratified(X, y, fraction, seed):
     sss = StratifiedShuffleSplit(n_splits=1, train_size=fraction, random_state=seed)
     idx, _ = next(sss.split(X, y))
     return X[idx], y[idx]
+
+
+def subsample_for_svm(X, y, seed):
+    """Stratified subsample for SVM if dataset is too large."""
+    if len(X) <= SVM_MAX_TRAIN:
+        return X, y, False
+    sss = StratifiedShuffleSplit(
+        n_splits=1, train_size=SVM_MAX_TRAIN, random_state=seed
+    )
+    idx, _ = next(sss.split(X, y))
+    return X[idx], y[idx], True
 
 
 def run_learning_curves(X_train, y_train, X_test, y_test, seed):
@@ -104,21 +148,27 @@ def run_learning_curves(X_train, y_train, X_test, y_test, seed):
 
         model_results = {}
         for name, model in models.items():
-            # Use scaled data for logreg, raw for tree models
-            if name == "logreg":
-                model.fit(X_sub_scaled, y_sub)
-                train_pred = model.predict(X_sub_scaled)
-                train_prob = model.predict_proba(X_sub_scaled)[:, 1]
-                val_pred = model.predict(X_test_scaled)
-                val_prob = model.predict_proba(X_test_scaled)[:, 1]
+            # Use scaled data for models that need it
+            if name in SCALED_MODELS:
+                X_tr, y_tr = X_sub_scaled, y_sub
+                X_te = X_test_scaled
+                # SVM subsample for large datasets
+                if name == "svm_rbf":
+                    X_tr, y_tr, _ = subsample_for_svm(X_tr, y_tr, seed)
+                model.fit(X_tr, y_tr)
+                train_pred = model.predict(X_tr)
+                train_prob = model.predict_proba(X_tr)[:, 1]
+                val_pred = model.predict(X_te)
+                val_prob = model.predict_proba(X_te)[:, 1]
+                train_metrics = evaluate(y_tr, train_pred, train_prob)
             else:
                 model.fit(X_sub, y_sub)
                 train_pred = model.predict(X_sub)
                 train_prob = model.predict_proba(X_sub)[:, 1]
                 val_pred = model.predict(X_test)
                 val_prob = model.predict_proba(X_test)[:, 1]
+                train_metrics = evaluate(y_sub, train_pred, train_prob)
 
-            train_metrics = evaluate(y_sub, train_pred, train_prob)
             val_metrics = evaluate(y_test, val_pred, val_prob)
 
             model_results[name] = {
