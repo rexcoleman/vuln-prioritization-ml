@@ -28,6 +28,7 @@
 | **Evidence** | LogReg AUC 0.903 vs best CVSS threshold (>=9.0) AUC 0.662 = +24.1pp delta. Exceeds the 15pp threshold by 9pp. Result confirmed across 5-seed learning curve analysis (LogReg 0.903 +/- 0.000 at full data). See `FINDINGS.md` RQ1, `outputs/models/expanded_summary.json`, `outputs/baselines/baselines_seed42.json`. |
 | **Implications** | CVSS is a weak exploitability predictor. Static severity formulas miss the signals that drive real-world exploitation (threat intel, vendor history, vulnerability class). Organizations relying solely on CVSS for patching priority are systematically mistriaging. |
 | **Linked RQ** | RQ1 (ML vs CVSS) |
+| **lock_commit** | `PLACEHOLDER` |
 
 ---
 
@@ -40,6 +41,7 @@
 | **Evidence** | epss_percentile is the #1 feature by mean |SHAP| (1.096), nearly 2x the next feature (has_exploit_ref at 0.573). SHAP computed on LogReg with StandardScaler applied. See `FINDINGS.md` RQ2, `outputs/explainability/`. |
 | **Implications** | EPSS is itself an ML model trained on richer data (exploit activity, social media, threat intel feeds). That it dominates SHAP importance confirms exploit-likelihood signals concentrate in real-time threat intelligence, not static vulnerability metadata. This also explains why our model matches but does not beat EPSS standalone (H-2 feeds into RQ3 interpretation). |
 | **Linked RQ** | RQ2 (Feature Importance) |
+| **lock_commit** | `PLACEHOLDER` |
 
 ---
 
@@ -52,6 +54,7 @@
 | **Evidence** | Temporal split test exploit rate is 0.3% (318/103,352) vs train exploit rate of 10.5% — a 35x class imbalance shift. F1 scores are depressed across all models (LogReg F1 0.106, RF F1 0.000, XGBoost F1 0.018) despite strong AUC. The 0.3% test exploit rate is clearly driven by ground truth lag (2024+ CVEs have not yet been catalogued in ExploitDB), not by a genuine drop in exploitation. ADR-0001 documents this design choice. See `FINDINGS.md` RQ1 critical caveat, `data/splits/split_info.json`. |
 | **Implications** | Temporal splits are more realistic for production deployment (you always predict on future CVEs) but require careful interpretation. Low F1 does not indicate model failure — it indicates incomplete labels. Any deployment must account for label maturation time. |
 | **Linked RQ** | RQ4 (Temporal Split vs Random Split) |
+| **lock_commit** | `PLACEHOLDER` |
 
 ---
 
@@ -64,6 +67,7 @@
 | **Evidence** | With default hyperparameters: LogReg AUC 0.903 > XGBoost AUC 0.825 (+7.8pp advantage for LogReg). LogReg also has near-zero variance across seeds (0.903 +/- 0.000) while XGBoost has high variance (0.825 +/- 0.000 at full data but 0.844 +/- 0.028 at partial data). However, complexity sweeps show XGBoost at max_depth=3 achieves AUC 0.912 +/- 0.000, surpassing LogReg. The refutation applies to default-HP XGBoost only. See `FINDINGS.md` RQ1 + Complexity Analysis, `outputs/diagnostics/complexity_curves_seed42.json`. |
 | **Implications** | For this problem — where signal concentrates in a handful of features (EPSS, exploit refs, CVSS, vendor history) — a regularized linear model outperforms unconstrained tree ensembles. Default-HP XGBoost overfits the 49-feature space. The lesson: model complexity must match signal density. With proper HP tuning (shallow trees), XGBoost recovers and exceeds LogReg, but the default "XGBoost wins on tabular data" heuristic does not hold here. |
 | **Linked RQ** | RQ1 (ML vs CVSS), Complexity Analysis |
+| **lock_commit** | `PLACEHOLDER` |
 
 ---
 

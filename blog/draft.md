@@ -30,6 +30,8 @@ Best CVSS threshold (≥9.0) achieves only 0.662 AUC-ROC. Random would be 0.5. C
 
 Logistic Regression wins — simpler models outperform on this task because the signal is in vendor metadata and CVE age, not complex feature interactions.
 
+![Model comparison: 7 algorithms vs CVSS baseline. LogReg leads at 0.903 AUC, all models beat CVSS 0.662. kNN barely clears the CVSS bar.](images/model_comparison.png)
+
 EPSS (0.912) slightly beats our model (0.903), but EPSS is a black box trained on proprietary data. Our model is open, explainable, and built on public data only.
 
 ### 2. EPSS Percentile Is the #1 Predictor — Vendor History Confirms Deployment-Ubiquity Thesis
@@ -54,6 +56,8 @@ The practitioner-relevant keyword features are meaningful but not dominant:
 - `kw_remote_code_execution` (#12, 0.141) — second strongest
 
 These validate practitioner judgment, but structural features (EPSS, exploit references, vendor history) matter more than vulnerability class.
+
+![SHAP feature importance: EPSS percentile dominates at 1.096 mean |SHAP|, nearly 2x the next feature. Vendor CVE count and CVSS score are essentially tied at ~0.43.](images/shap_bar_top20_seed42.png)
 
 ### 3. The Ground Truth Lag Problem
 
@@ -83,6 +87,31 @@ The adversarial risk: an attacker who knows the model could craft CVE descriptio
 **EPSS is hard to beat.** Our model (0.903) came close to EPSS (0.912) but didn't beat it. The value of our approach isn't raw performance — it's explainability (SHAP) and openness (public data, open code).
 
 The pipeline is open source. Built with [govML](https://github.com/rexcoleman/govML) v2.4 governance.
+
+## Limitations
+
+**Ground truth lag is the biggest threat to external validity.** The 2024+ test set has only 0.3% exploit rate vs 10.5% in training — not because recent CVEs are safer, but because ExploitDB lags by months to years. Any model deployed on recent CVEs will face this same label maturation problem. F1 scores (best: 0.106) reflect label incompleteness, not model failure.
+
+**No proprietary data.** EPSS has access to threat intel feeds, social media mentions, and exploit activity telemetry that our model does not. The comparison is fair on methodology but asymmetric on data access. Organizations with threat intel subscriptions could build stronger models.
+
+**Single SHAP seed.** Feature importance analysis uses seed 42 only. The multi-seed expanded training confirms LogReg AUC is deterministic (0.903 +/- 0.000), so SHAP rankings are likely stable, but this has not been formally verified across seeds.
+
+**Fixed temporal boundary.** All seeds use the same pre-2024/2024+ split. Variance estimates reflect model randomness, not split sensitivity. Rolling temporal windows would provide stronger generalization evidence.
+
+**49 features, no TF-IDF.** The feature set is hand-engineered from structured NVD fields plus keyword indicators. Adding TF-IDF or BERT embeddings from CVE descriptions is a stretch goal that may capture additional signal — though the ablation shows description stats actually hurt default-HP XGBoost, so more text features could backfire without careful regularization.
+
+## What's Next
+
+**Immediate:** Publish this analysis and the open-source pipeline. The findings are strong enough to share — 7 algorithms, 5 seeds, ablation, SHAP, adversarial evaluation, and 167 passing tests.
+
+**Short-term experiments:**
+- Rolling temporal windows (quarterly boundaries instead of single 2024 cutoff) to test generalization stability
+- Multi-seed SHAP to confirm feature importance rankings are not seed-dependent
+- TF-IDF/BERT features with constrained tree depth to test whether text embeddings add signal without overfitting
+
+**Production direction:** A lightweight vulnerability prioritization API that takes a CVE ID and returns an exploit probability score with SHAP explanations. The key differentiator vs EPSS: explainability. Security teams can see *why* a CVE is flagged high-risk, not just that it is.
+
+**Cross-project validation:** The feature controllability finding (defender-observable features provide robust predictions) now holds across two domains — IDS (FP-01) and vulnerability prediction (FP-05). The next test is FP-12 (RL agent vulnerability), where the question becomes: can RL policies be attacked through environment features the defender controls?
 
 ---
 
