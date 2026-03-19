@@ -1,0 +1,13 @@
+{
+  "date": "2026-03-19T03:17:43.035532",
+  "kev_url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+  "kev_total": 1545,
+  "train_kev_count": 1179,
+  "test_kev_count": 366,
+  "train_either_count": 25367,
+  "test_either_count": 648,
+  "train_overlap": 390,
+  "test_overlap": 36,
+  "train_kev_only": 789,
+  "test_kev_only": 330
+}

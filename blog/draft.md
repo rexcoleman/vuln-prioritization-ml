@@ -4,11 +4,11 @@ I trained ML models on 338K CVEs to predict which vulnerabilities have real expl
 
 ## What I Built
 
-An ML pipeline that ingests CVEs from three public sources (NVD, ExploitDB, EPSS), engineers 49 features, and predicts real-world exploitability. The target variable: does this CVE have a known exploit in ExploitDB?
+An ML pipeline that ingests CVEs from four public sources (NVD, ExploitDB, EPSS, CISA KEV), engineers 49 features, and predicts real-world exploitability using dual ground truth labels — ExploitDB (exploit code availability) and CISA's Known Exploited Vulnerabilities catalog (confirmed active exploitation).
 
-Three data sources, three baselines, three ML models, SHAP explainability, and adversarial evaluation with feature controllability analysis.
+Seven algorithms, five seeds, temporal train/test split, SHAP explainability, feature group ablation, EPSS circularity analysis, and adversarial evaluation with feature controllability analysis. 167 passing tests.
 
-Built with [govML](https://github.com/rexcoleman/govML) v2.4. 11 architecture decision records documenting every tradeoff.
+Built with [govML](https://github.com/rexcoleman/govML). 11 architecture decision records documenting every tradeoff.
 
 ## Why CVSS Fails at Prioritization
 
@@ -33,6 +33,8 @@ Logistic Regression wins — simpler models outperform on this task because the 
 ![Model comparison: 7 algorithms vs CVSS baseline. LogReg leads at 0.903 AUC, all models beat CVSS 0.662. kNN barely clears the CVSS bar.](images/model_comparison.png)
 
 EPSS (0.912) slightly beats our model (0.903), but EPSS is a black box trained on proprietary data. Our model is open, explainable, and built on public data only.
+
+![Learning curves: LogReg is remarkably stable across training set sizes, achieving 0.897 AUC with just 10% of data. XGBoost shows the highest variance and peaks early before declining — a classic overfitting signature.](images/learning_curves.png)
 
 ### 2. EPSS Percentile Is the #1 Predictor — Vendor History Confirms Deployment-Ubiquity Thesis
 
@@ -59,6 +61,8 @@ These validate practitioner judgment, but structural features (EPSS, exploit ref
 
 ![SHAP feature importance: EPSS percentile dominates at 1.096 mean |SHAP|, nearly 2x the next feature. Vendor CVE count and CVSS score are essentially tied at ~0.43.](images/shap_bar_top20_seed42.png)
 
+![SHAP beeswarm plot showing per-sample feature contributions. EPSS percentile shows the widest spread, confirming its dominant role. High vendor_cve_count values push predictions toward exploitation.](images/shap_summary_seed42.png)
+
 ### 3. The Ground Truth Lag Problem
 
 We used a temporal split: train on pre-2024 CVEs (10.5% exploited), test on 2024+ CVEs (0.3% exploited). The massive drop isn't because 2024 CVEs are less exploitable — it's because ExploitDB hasn't caught up yet. Exploits exist but haven't been catalogued.
@@ -78,19 +82,46 @@ Applying the controllability methodology from FP-01:
 
 The adversarial risk: an attacker who knows the model could craft CVE descriptions to manipulate priority scoring. Mitigation: weight non-textual features (vendor history, EPSS) higher than text features.
 
+### 5. Dual Ground Truth: ExploitDB + CISA KEV
+
+ExploitDB tracks exploit code availability. CISA's Known Exploited Vulnerabilities (KEV) catalog tracks confirmed active exploitation. They're complementary — only 36 of our test CVEs appear in both. Adding KEV as a second label source nearly doubles our test positives (318 → 648).
+
+| Ground Truth | LogReg AUC | XGB-Tuned AUC |
+|---|---|---|
+| ExploitDB only | 0.903 | 0.912 |
+| KEV only | 0.802 | 0.875 |
+| **Either (ExploitDB OR KEV)** | **0.892** | **0.928** |
+
+**XGB-tuned with combined labels achieves 0.928 AUC** — the best result in this project. Two independent label sources give the model a more complete picture of what "exploited" means.
+
+### 6. The EPSS Circularity Problem (Honest Reframe)
+
+A reviewer would ask: "If EPSS is your #1 feature, aren't you just learning to copy EPSS?"
+
+Yes. When we remove EPSS features entirely, every model collapses to ~0.68 AUC — barely above CVSS (0.662). The honest reframe:
+
+- **With EPSS:** ML matches EPSS (0.903-0.928 AUC). The model is largely delegating to EPSS.
+- **Without EPSS:** Public metadata alone gets you ~0.68 AUC. Modest but real signal from CVSS, vendor history, and CWE patterns.
+
+The practical value: organizations without EPSS access can still build a model that beats CVSS using only public NVD data. And for KEV prediction specifically, XGB without EPSS still achieves 0.784 AUC — meaningful for predicting which vulns will end up on CISA's mandatory-patch list.
+
 ## What I Learned
 
 **Simplicity wins.** Logistic Regression beat XGBoost and Random Forest. The signal is linear — vendor size and CVE age predict exploitation without complex interactions.
 
+![Complexity curves: XGBoost at max_depth=3 achieves 0.912 AUC (matching EPSS), while default depth=8 overfits badly. LogReg is insensitive to regularization — a sign that the problem is inherently low-dimensional.](images/complexity_curves.png)
+
 **Temporal splits expose reality.** Random splits give flattering numbers (AUC 0.95+). Temporal splits give honest numbers (AUC 0.90). Always use temporal splits for time-dependent data.
 
-**EPSS is hard to beat.** Our model (0.903) came close to EPSS (0.912) but didn't beat it. The value of our approach isn't raw performance — it's explainability (SHAP) and openness (public data, open code).
+**EPSS is the signal, not the competition.** Our model (0.903) came close to EPSS (0.912) because it learned to weight EPSS heavily. The honest contribution isn't "we beat EPSS" — it's quantifying how much EPSS contributes (15-23pp AUC) and showing that dual ground truth (ExploitDB + CISA KEV) pushes tuned XGBoost to 0.928 AUC.
+
+**Dual ground truth matters.** Adding CISA KEV as a second label source improved our best model from 0.912 to 0.928 AUC. Different label sources capture different facets of exploitation.
 
 The pipeline is open source. Built with [govML](https://github.com/rexcoleman/govML) v2.4 governance.
 
 ## Limitations
 
-**Ground truth lag is the biggest threat to external validity.** The 2024+ test set has only 0.3% exploit rate vs 10.5% in training — not because recent CVEs are safer, but because ExploitDB lags by months to years. Any model deployed on recent CVEs will face this same label maturation problem. F1 scores (best: 0.106) reflect label incompleteness, not model failure.
+**Ground truth lag is the biggest threat to external validity.** The 2024+ test set has only 0.3% exploit rate vs 10.5% in training — not because recent CVEs are safer, but because ExploitDB lags by months to years. Adding CISA KEV as a second source partially mitigates this (doubling test positives to 0.63%), but the fundamental label maturation problem remains. F1 scores (best: 0.106) reflect label incompleteness, not model failure.
 
 **No proprietary data.** EPSS has access to threat intel feeds, social media mentions, and exploit activity telemetry that our model does not. The comparison is fair on methodology but asymmetric on data access. Organizations with threat intel subscriptions could build stronger models.
 
@@ -115,4 +146,4 @@ The pipeline is open source. Built with [govML](https://github.com/rexcoleman/go
 
 ---
 
-*Rex Coleman is an MS Computer Science student (Machine Learning) at Georgia Tech, building at the intersection of AI security and ML systems engineering. Previously 15 years in cybersecurity (FireEye/Mandiant — analytics, enterprise sales, cross-functional leadership). CFA charterholder. Creator of [govML](https://github.com/rexcoleman/govML).*
+*Rex Coleman is an MS Computer Science student (Machine Learning) at Georgia Tech, building at the intersection of AI security and ML systems engineering. Previously data analytics and enterprise sales at FireEye/Mandiant. CFA charterholder. Creator of [govML](https://github.com/rexcoleman/govML).*

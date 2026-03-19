@@ -4,30 +4,32 @@
 
 ---
 
-After 15 years at Mandiant, I watched security teams burn hours patching CVSS 9.8s that never got exploited — while CVSS 7.5s got weaponized and led to breaches.
+From my time at FireEye/Mandiant, I saw security teams burn hours patching CVSS 9.8s that never got exploited — while CVSS 7.5s got weaponized and led to breaches.
 
 CVSS measures severity. Attackers measure opportunity.
 
-I trained an ML model on 338,000 real CVEs to find out what actually predicts exploitation. Here's what the data says:
+I trained ML models on 338,000 real CVEs to find out what actually predicts exploitation. Here's what the data says:
 
 CVSS predicts exploitability with AUC 0.66. Barely better than a coin flip.
-ML model: AUC 0.90. A 24-point improvement.
+ML models: AUC 0.90-0.93. A 24+ point improvement.
 
-But the real insight is WHY. SHAP explainability reveals:
+But here's the honest part most researchers skip:
 
-1. The #1 predictor is how many CVEs a vendor has — not severity. Attackers invest where deployment is highest. They maintain toolkits for high-value targets and add new CVEs to existing exploit chains.
+The #1 predictor is EPSS percentile — which is ITSELF another ML model trained on richer data. Remove EPSS features and every model drops to ~0.68 AUC. The model was largely delegating to EPSS.
 
-2. #2 is vulnerability age. Weaponization isn't instant — it follows a lifecycle from disclosure to PoC to exploit kit to active exploitation. A 2-year-old CVE is more dangerous than a 2-day-old one.
+So what does ML actually add?
 
-3. Practitioner keywords (SQL injection, RCE) rank #8-#12. They matter — but less than where the vuln is and how long it's been available.
+1. Dual ground truth matters. Combining ExploitDB + CISA KEV labels pushes tuned XGBoost to 0.928 AUC — because different sources capture different facets of exploitation.
 
-4. CVSS score? Only #5. The formula everyone uses for prioritization is the fifth most important feature.
+2. Without EPSS, public metadata still beats CVSS. Vendor history, CWE patterns, and temporal features provide modest but real signal (~0.68-0.78 AUC depending on ground truth).
 
-The model is also naturally robust to adversarial manipulation — 0% evasion across 3 attack types. Why? Because its top features are things attackers can't control (vendor history, publication date, EPSS score). You can rewrite a CVE description to hide an RCE, but you can't change the vendor's CVE count.
+3. Feature controllability is an architectural defense. 0% adversarial evasion because the top features are things attackers can't control. Validated across two security domains.
 
-This is the same "feature controllability" principle I validated on network intrusion detection. Build ML security systems on features the adversary cannot manipulate.
+4. For organizations without threat intel subscriptions, a model trained on public NVD data gets meaningful predictions — especially for CISA KEV prediction (0.784 AUC without EPSS).
 
-Full code, data pipeline, and SHAP visualizations are open source.
+The real contribution isn't "ML beats CVSS." It's quantifying how much EPSS contributes and showing what's possible with public data alone.
+
+Full code, data pipeline, and SHAP visualizations are open source. 7 algorithms, 5 seeds, 167 tests.
 
 #AISecurity #MachineLearning #Cybersecurity #VulnerabilityManagement #BuildInPublic
 

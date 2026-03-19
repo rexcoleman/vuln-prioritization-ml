@@ -86,7 +86,7 @@
 |------|------|----------|-------|
 | [x] | Abstract follows CCC structure (Context, Contribution, Conclusion) | Gate 7 | `blog/conference_abstract.md` |
 | [x] | Title is claim-based (states finding, not topic) | Gate 7 | FINDINGS.md renamed to claim-based title |
-| [ ] | Related work positions against >=3 prior papers | Gate 7 | Need explicit related work section (EPSS paper, CVSS critique literature, ML-for-vuln papers) |
+| [x] | Related work positions against >=3 prior papers | Gate 7 | FINDINGS.md Related Work section: Bozorgi (2010), Jacobs/EPSS (2020-21), Suciu (2022), Allodi & Massacci (2014), Spring/SSVC (2021), Chen (2019), Yin (2020) |
 | [ ] | Conclusion restates contribution + limitations + future work | Gate 7 | Blog has Limitations + What's Next; conference abstract needs formal conclusion |
 | [ ] | Camera-ready formatting matches venue | Gate 7 | Pending venue selection (BSides format TBD) |
 | [x] | Figures legible at print resolution (>=300 DPI) | Gate 6 | All figures generated via matplotlib at 300 DPI (`scripts/make_report_figures.py`) |
@@ -105,9 +105,9 @@
 | Cybersecurity Rigor | 7 | 10 | 70% |
 | Execution | 9 | 12 | 75% |
 | Publication | 8 | 9 | 89% |
-| Conference Readiness | 6 | 10 | 60% |
-| **Overall** | **42** | **53** | **79%** |
+| Conference Readiness | 7 | 10 | 70% |
+| **Overall** | **43** | **53** | **81%** |
 
 > **A+ threshold:** All Gate 0-5 items checked. Gate 6-7 items required for publication track only. Conference readiness (Section 5) required for submission track.
 >
-> **Remaining gaps:** Data checksums (Gate 0), gate script (Gate 5), CI (Gate 5), external review (Gate 7), 3 out-of-scope cybersecurity items, related work section, formal conclusion, camera-ready formatting, figure captions with takeaway statements.
+> **Remaining gaps:** Data checksums (Gate 0), gate script (Gate 5), CI (Gate 5), external review (Gate 7), 3 out-of-scope cybersecurity items, formal conclusion, camera-ready formatting, figure captions with takeaway statements.

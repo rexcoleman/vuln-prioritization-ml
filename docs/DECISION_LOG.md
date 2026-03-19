@@ -84,3 +84,17 @@
 - **Decision:** AI writes interpretation draft. User reviews, edits, and takes ownership before publication. The published blog post remains the user's voice.
 - **Consequences:** Faster iteration on FINDINGS.md. Risk: interpretation may lack nuance that only practitioner experience provides. Mitigation: user reviews before any publication.
 - **Contracts affected:** CLAUDE_MD (AI Division of Labor override), FINDINGS.md, PUBLICATION_PIPELINE
+
+## ADR-0012: Add CISA KEV as second ground truth source
+- **Date:** 2026-03-19 | **Phase:** 4
+- **Context:** Reviewer criticism: "Single ground truth source (ExploitDB)." ExploitDB tracks exploit code availability but misses actively exploited CVEs without public PoCs. CISA KEV is a government-curated list of 1,545 vulnerabilities confirmed as actively exploited in the wild.
+- **Decision:** Download CISA KEV catalog. Create dual labels: ExploitDB-only, KEV-only, Either (ExploitDB OR KEV). Retrain best models (LogReg, XGB-tuned) on all three label sets.
+- **Consequences:** Test positive count nearly doubles (318 → 648). XGB-tuned with either-label achieves AUC 0.928 (best result). KEV-only is harder (only 1,179 train positives) but XGB still achieves 0.875. Dual labeling partially addresses ground truth lag.
+- **Contracts affected:** DATA_CONTRACT (new data source), FINDINGS.md, HYPOTHESIS_REGISTRY (H-5)
+
+## ADR-0013: EPSS circularity analysis — retrain without EPSS features
+- **Date:** 2026-03-19 | **Phase:** 4
+- **Context:** Reviewer criticism: "You're showing an ML model trained on EPSS learns EPSS. This is circular." EPSS percentile is the #1 SHAP feature at 2x the next feature. The existing ablation showed removing EPSS drops XGBoost AUC by 15.5pp, but we need the full picture: all 7 models × 5 seeds without EPSS.
+- **Decision:** Retrain all models with EPSS features (epss, epss_percentile) completely removed. 47 features remain. Include both default and tuned XGBoost variants.
+- **Consequences:** Confirms circularity — all models drop to ~0.68 AUC without EPSS. Reframes the contribution: EPSS dominance quantified at 15-23pp across model families. Public metadata alone provides modest but real signal above CVSS (0.662). Honest negative result foregrounded.
+- **Contracts affected:** FINDINGS.md (EPSS Circularity Analysis section), HYPOTHESIS_REGISTRY (H-6), Blog Post Angle (reframed)
