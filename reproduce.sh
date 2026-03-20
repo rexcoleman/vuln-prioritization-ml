@@ -184,3 +184,11 @@ python -m pytest tests/ -v --tb=short
 echo ""
 echo "To re-run tests:  pytest tests/ -v"
 echo "To verify:        python scripts/check_data_ready.py"
+
+# --- Gate Validation (R50) ---
+if [ -f "$HOME/ml-governance-templates/scripts/check_all_gates.sh" ]; then
+    echo "--- Gate Validation (R50) ---"
+    bash "$HOME/ml-governance-templates/scripts/check_all_gates.sh" .
+else
+    echo "WARN: govML not found — skipping gate validation (R50)"
+fi

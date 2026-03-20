@@ -1,3 +1,12 @@
+---
+project: "EPSS Dominates: ML Vulnerability Prioritization Matches EPSS Using Only Public D"
+fp: "FP-05"
+status: COMPLETE
+quality_score: 7.6
+last_scored: 2026-03-20
+profile: security-ml
+---
+
 # EPSS Dominates: ML Vulnerability Prioritization Matches EPSS Using Only Public Data While CVSS Fails
 
 > **Status:** QUALITY GATES COMPLETE — 7 algorithms x 5 seeds, sanity baselines, learning curves, complexity sweeps, ablation, hypothesis registry, 25+ tests
