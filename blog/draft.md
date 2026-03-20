@@ -142,7 +142,7 @@ The pipeline is open source. Built with [govML](https://github.com/rexcoleman/go
 
 **Production direction:** A lightweight vulnerability prioritization API that takes a CVE ID and returns an exploit probability score with SHAP explanations. The key differentiator vs EPSS: explainability. Security teams can see *why* a CVE is flagged high-risk, not just that it is.
 
-**Cross-project validation:** The feature controllability finding (defender-observable features provide robust predictions) now holds across two domains — IDS and vulnerability prediction. The next test is RL agent vulnerability, where the question becomes: can RL policies be attacked through environment features the defender controls?
+**Cross-project validation:** The feature controllability finding (defender-observable features provide reliable predictions) now holds across two domains — IDS and vulnerability prediction. The next test is RL agent vulnerability, where the question becomes: can RL policies be attacked through environment features the defender controls?
 
 ---
 
