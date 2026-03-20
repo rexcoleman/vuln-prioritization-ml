@@ -31,6 +31,8 @@ The real contribution isn't "ML beats CVSS." It's quantifying how much EPSS cont
 
 Full code, data pipeline, and SHAP visualizations are open source. 7 algorithms, 5 seeds, 167 tests.
 
+What does your team actually use for vuln prioritization? I'm curious if CVSS is still the default.
+
 #AISecurity #MachineLearning #Cybersecurity #VulnerabilityManagement #BuildInPublic
 
 ---

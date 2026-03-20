@@ -4,6 +4,8 @@
 
 ---
 
+**Subject line:** CVSS predicts exploitation at AUC 0.66. I trained models that hit 0.93.
+
 If you've ever triaged vulnerabilities using CVSS scores, you know the feeling: a "Critical 9.8" sits unpatched for months because your team knows it's not actually exploitable in your environment, while a "High 7.5" gets weaponized next week.
 
 CVSS scores severity, not exploitability. It's a static formula that predicts real-world exploitation with AUC 0.66 — barely better than a coin flip.

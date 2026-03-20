@@ -7,18 +7,11 @@
 
 ## Abstract
 
-CVSS is the industry standard for vulnerability scoring, but it was designed to measure severity — not exploitability. We demonstrate that CVSS predicts real-world exploitation with an AUC of only 0.66 (barely better than random), while ML models trained on public data achieve 0.90-0.93.
+CVSS is the industry standard for vulnerability scoring, but it was designed to measure severity — not exploitability. We demonstrate that CVSS predicts real-world exploitation with an AUC of only 0.66 (barely better than random), while ML models trained on public data achieve 0.93.
 
-We train 7 algorithms across 5 seeds on 338,000 CVEs from the National Vulnerability Database, using dual ground truth labels from ExploitDB (25K exploits) and CISA's Known Exploited Vulnerabilities catalog (1,545 actively exploited CVEs). Using temporal train/test splits to prevent data leakage, we compare ML predictions against CVSS thresholds and EPSS (the Exploit Prediction Scoring System).
+We train 7 algorithms across 5 seeds on 338,000 CVEs from the National Vulnerability Database, using dual ground truth from ExploitDB and CISA KEV with temporal train/test splits. ML outperforms CVSS by 24 AUC points, but EPSS does the heavy lifting — removing EPSS features drops all models to 0.68 AUC. Dual ground truth (ExploitDB + KEV) pushes tuned XGBoost to 0.928. SHAP analysis reveals EPSS percentile dominates at 2x the next feature. Feature controllability analysis shows 0% adversarial evasion because top features are defender-observable. The honest negative result: without EPSS, public metadata provides only modest signal over CVSS.
 
-Key findings:
-1. **ML crushes CVSS** (+24 AUC points) — but EPSS is doing the heavy lifting. Removing EPSS features drops all models to ~0.68 AUC, quantifying EPSS's 15-23pp contribution.
-2. **Dual ground truth improves results.** Combining ExploitDB + CISA KEV labels pushes tuned XGBoost to AUC 0.928 — the strongest result — because KEV captures actively exploited CVEs that ExploitDB misses.
-3. **SHAP explainability** reveals EPSS percentile dominates at 2x the next feature, followed by exploit references, CVSS score, and vendor history.
-4. **Feature controllability analysis** shows 0% adversarial evasion because top features are defender-observable — validated across two security domains (IDS + CVE).
-5. **Honest negative results:** Without EPSS, public metadata provides only modest signal over CVSS (~0.68 AUC). The contribution is quantifying this gap, not claiming to beat EPSS.
-
-We release the full pipeline as open source with govML governance (7 algorithms × 5 seeds, documented decisions, SHAP visualizations, 167 passing tests).
+Attendees will leave with a quantified comparison of CVSS vs ML vs EPSS for exploitation prediction, SHAP-based feature importance they can apply to their own vulnerability management programs, and access to the full open-source pipeline with 167 passing tests.
 
 ## Bio (100 words)
 
